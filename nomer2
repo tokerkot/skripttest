@@ -1,0 +1,53 @@
+import os
+from PIL import Image
+
+FOTO1 = r"C:\Users\Rog\Desktop\Скрипт\FOTO1"
+FOTO2 = r"C:\Users\Rog\Desktop\Скрипт\FOTO2"
+GOTOVO = r"C:\Users\Rog\Desktop\Скрипт\GOTOVO"
+PNG = r"C:\Users\Rog\Desktop\Скрипт\PNG"
+
+source_image_path = os.path.join(FOTO1, "source_image.jpg")
+secret_image_path = os.path.join(FOTO2, "secret_image.jpg")
+encoded_image_path = os.path.join(GOTOVO, "encoded_image.png")
+decoded_image_path = os.path.join(PNG, "decoded_secret.png")
+
+def encode_image(source_image_path, secret_image_path, output_image_path):
+    source_img = Image.open(source_image_path).convert("RGB")
+    secret_img = Image.open(secret_image_path).convert("RGB")
+    secret_img = secret_img.resize(source_img.size)
+    source_pixels = source_img.load()
+    secret_pixels = secret_img.load()
+    encoded_img = Image.new("RGB", source_img.size)
+    encoded_pixels = encoded_img.load()
+
+    for x in range(source_img.width):
+        for y in range(source_img.height):
+            source_pixel = source_pixels[x, y]
+            secret_pixel = secret_pixels[x, y]
+            r = (source_pixel[0] & 0b11111100) | (secret_pixel[0] >> 6)
+            g = (source_pixel[1] & 0b11111100) | (secret_pixel[1] >> 6)
+            b = (source_pixel[2] & 0b11111100) | (secret_pixel[2] >> 6)
+            encoded_pixels[x, y] = (r, g, b)
+
+    encoded_img.save(output_image_path, "PNG")
+    print(f"Закодированное изображение сохранено как {output_image_path}")
+
+def decode_image(encoded_image_path, output_secret_image_path):
+    encoded_img = Image.open(encoded_image_path)
+    encoded_pixels = encoded_img.load()
+    decoded_img = Image.new("RGB", encoded_img.size)
+    decoded_pixels = decoded_img.load()
+
+    for x in range(encoded_img.width):
+        for y in range(encoded_img.height):
+            encoded_pixel = encoded_pixels[x, y]
+            r = (encoded_pixel[0] & 0b00000011) << 6
+            g = (encoded_pixel[1] & 0b00000011) << 6
+            b = (encoded_pixel[2] & 0b00000011) << 6
+            decoded_pixels[x, y] = (r, g, b)
+
+    decoded_img.save(output_secret_image_path, "PNG")
+    print(f"Секретное изображение восстановлено и сохранено как {output_secret_image_path}")
+
+encode_image(source_image_path, secret_image_path, encoded_image_path)
+decode_image(encoded_image_path, decoded_image_path)
